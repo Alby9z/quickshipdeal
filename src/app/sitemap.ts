@@ -4,7 +4,8 @@ import { siteUrl } from "@/lib/env";
 import { publicProductWhere } from "@/modules/catalog/repository";
 import { publicPostWhere } from "@/modules/blog/queries";
 
-export const revalidate = 3600;
+// Généré à la demande (pas au build) : le build ne dépend pas de la base.
+export const dynamic = "force-dynamic";
 
 const PAGE_PATHS: Record<string, string> = { about: "/a-propos", faq: "/faq", shipping: "/politique-de-livraison", returns: "/politique-de-retour", terms: "/cgv", privacy: "/confidentialite", cookies: "/cookies" };
 
