@@ -95,9 +95,17 @@ async function dispatch(tx: Tx, event: Stripe.Event, after: AfterCommit) {
 
 async function markOrderPaid(tx: Tx, s: Stripe.Checkout.Session, after: AfterCommit) {
   const orderId = s.metadata?.orderId ?? s.client_reference_id;
-  if (!orderId) throw new Error(`Session ${s.id} sans référence de commande`);
+  // Session étrangère à la boutique (ex. `stripe trigger`, autre intégration) : rien à faire.
+  // On répond 200 pour que Stripe ne réessaie pas indéfiniment ; les vraies erreurs restent en 500.
+  if (!orderId) {
+    logger.warn({ sessionId: s.id }, "Webhook Stripe : session sans référence de commande, ignorée");
+    return;
+  }
   const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: { include: { product: true } } } });
-  if (!order) throw new Error(`Commande ${orderId} introuvable pour la session ${s.id}`);
+  if (!order) {
+    logger.warn({ sessionId: s.id, orderId }, "Webhook Stripe : commande introuvable, session ignorée");
+    return;
+  }
   if (order.paymentStatus === "SUCCEEDED") return; // déjà confirmée
 
   // Contrôle de cohérence : montant et devise doivent correspondre exactement.
