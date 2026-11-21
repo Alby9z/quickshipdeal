@@ -10,6 +10,11 @@ const optional = z
   .optional()
   .transform((v) => (v && v.trim() !== "" ? v.trim() : undefined));
 
+// Base Europe (intégration Neon, préfixe DATABASE_EU) : prioritaire, et suffit
+// même si DATABASE_URL a disparu après suppression de l'ancienne base.
+const euDatabaseUrl = process.env.DATABASE_EU_DATABASE_URL ?? process.env.DATABASE_EU_URL;
+if (euDatabaseUrl) process.env.DATABASE_URL = euDatabaseUrl;
+
 const schema = z.object({
   APP_ENV: z.enum(["development", "preview", "production", "test"]).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
