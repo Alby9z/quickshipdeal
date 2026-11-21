@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: qsd
+          POSTGRES_PASSWORD: qsd
+          POSTGRES_DB: qsd_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qsd" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Valeurs de CI uniquement : base jetable, aucun secret réel.
+      DATABASE_URL: postgresql://qsd:qsd@localhost:5432/qsd_test
+      DIRECT_URL: postgresql://qsd:qsd@localhost:5432/qsd_test
+      TEST_DATABASE_URL: postgresql://qsd:qsd@localhost:5432/qsd_test
+      BETTER_AUTH_SECRET: ci-only-secret-not-used-in-any-environment-000000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Migrations
+        run: npx prisma migrate deploy
+      - name: Tests unitaires et d'intégration
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Tests E2E
+        run: npx playwright test
+      - name: Audit des dépendances
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true

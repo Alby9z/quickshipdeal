@@ -1,0 +1,54 @@
+import type { OrderStatus } from "@prisma/client";
+
+/** Libellés clients des statuts de commande. */
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING_PAYMENT: "En attente de paiement",
+  PAID: "Paiement confirmé",
+  CONFIRMED: "Commande validée",
+  SUPPLIER_PROCESSING: "En préparation fournisseur",
+  SUPPLIER_ORDERED: "Commande fournisseur transmise",
+  AWAITING_SHIPMENT: "En attente d'expédition",
+  SHIPPED: "Expédiée",
+  IN_TRANSIT: "En transit",
+  OUT_FOR_DELIVERY: "En cours de livraison",
+  DELIVERED: "Livrée",
+  DELIVERY_FAILED: "Livraison en échec",
+  CANCELLED: "Annulée",
+  REFUNDED: "Remboursée",
+  PARTIALLY_REFUNDED: "Partiellement remboursée",
+  RETURN_REQUESTED: "Retour demandé",
+  RETURN_RECEIVED: "Retour reçu",
+};
+
+/** Machine à états : transitions autorisées. Toute autre transition est refusée. */
+export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING_PAYMENT: ["PAID", "CANCELLED"],
+  PAID: ["CONFIRMED", "CANCELLED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  CONFIRMED: ["SUPPLIER_PROCESSING", "SUPPLIER_ORDERED", "AWAITING_SHIPMENT", "SHIPPED", "CANCELLED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  SUPPLIER_PROCESSING: ["SUPPLIER_ORDERED", "AWAITING_SHIPMENT", "SHIPPED", "CANCELLED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  SUPPLIER_ORDERED: ["AWAITING_SHIPMENT", "SHIPPED", "CANCELLED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  AWAITING_SHIPMENT: ["SHIPPED", "CANCELLED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  SHIPPED: ["IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "DELIVERY_FAILED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  IN_TRANSIT: ["OUT_FOR_DELIVERY", "DELIVERED", "DELIVERY_FAILED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  OUT_FOR_DELIVERY: ["DELIVERED", "DELIVERY_FAILED", "IN_TRANSIT"],
+  DELIVERED: ["RETURN_REQUESTED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  DELIVERY_FAILED: ["SHIPPED", "IN_TRANSIT", "REFUNDED", "PARTIALLY_REFUNDED", "CANCELLED"],
+  CANCELLED: ["REFUNDED"],
+  REFUNDED: [],
+  PARTIALLY_REFUNDED: ["REFUNDED", "RETURN_REQUESTED", "RETURN_RECEIVED", "SHIPPED", "IN_TRANSIT", "DELIVERED"],
+  RETURN_REQUESTED: ["RETURN_RECEIVED", "DELIVERED", "REFUNDED", "PARTIALLY_REFUNDED"],
+  RETURN_RECEIVED: ["REFUNDED", "PARTIALLY_REFUNDED", "DELIVERED"],
+};
+
+export function canTransition(from: OrderStatus, to: OrderStatus) {
+  return from === to || ORDER_TRANSITIONS[from].includes(to);
+}
+
+/** Étapes affichées sur la timeline client (parcours nominal). */
+export const TIMELINE_STEPS: OrderStatus[] = ["PAID", "CONFIRMED", "SUPPLIER_ORDERED", "SHIPPED", "IN_TRANSIT", "DELIVERED"];
+
+export const PAID_STATUSES: OrderStatus[] = [
+  "PAID", "CONFIRMED", "SUPPLIER_PROCESSING", "SUPPLIER_ORDERED", "AWAITING_SHIPMENT", "SHIPPED",
+  "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "DELIVERY_FAILED", "PARTIALLY_REFUNDED",
+  "RETURN_REQUESTED", "RETURN_RECEIVED",
+];
