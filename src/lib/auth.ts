@@ -74,7 +74,13 @@ export const auth = betterAuth({
     useSecureCookies: siteUrl().startsWith("https://"),
     defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
   },
-  trustedOrigins: [siteUrl()],
+  // Domaine principal + URLs générées par Vercel (alias de projet, branche, déploiement).
+  trustedOrigins: [
+    siteUrl(),
+    ...[process.env.VERCEL_PROJECT_PRODUCTION_URL, process.env.VERCEL_BRANCH_URL, process.env.VERCEL_URL]
+      .filter((h): h is string => Boolean(h))
+      .map((h) => `https://${h}`),
+  ],
   databaseHooks: {
     user: {
       create: {
