@@ -3,7 +3,13 @@
 # L'intégration Neon fournit DATABASE_URL_UNPOOLED ; Prisma Migrate l'utilise via DIRECT_URL.
 set -euo pipefail
 
-export DIRECT_URL="${DIRECT_URL:-${DATABASE_URL_UNPOOLED:-}}"
+# Base Europe (préfixe DATABASE_EU) prioritaire si elle est connectée.
+if [ -n "${DATABASE_EU_URL:-}" ]; then
+  export DATABASE_URL="$DATABASE_EU_URL"
+  export DIRECT_URL="${DATABASE_EU_URL_UNPOOLED:-$DATABASE_EU_URL}"
+else
+  export DIRECT_URL="${DIRECT_URL:-${DATABASE_URL_UNPOOLED:-}}"
+fi
 
 npx prisma generate
 
