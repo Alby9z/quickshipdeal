@@ -35,3 +35,13 @@ Configurer Stripe (webhook de production), Resend (domaine vérifié), R2 : voir
 ## CI
 
 `.github/workflows/ci.yml` : typecheck, lint, migrations, tests unitaires et d'intégration, build, E2E Playwright, audit des dépendances. Activer la protection de la branche `main` pour exiger le passage de la CI.
+
+## Build Vercel automatique
+
+Vercel lance `npm run vercel-build` (`scripts/vercel-build.sh`) :
+
+- `DIRECT_URL` reprend `DATABASE_URL_UNPOOLED` (fourni par l'intégration Neon) s'il n'est pas défini ;
+- en production uniquement : `prisma migrate deploy`, puis le seed (idempotent, aucune donnée commerciale) ;
+- les déploiements de prévisualisation ne touchent pas à la base.
+
+Le seed crée l'administrateur si `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` sont définis. Il ne change jamais le mot de passe d'un compte existant : supprimez `SEED_ADMIN_PASSWORD` de Vercel après la première connexion.
