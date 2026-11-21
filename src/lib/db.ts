@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 
 // Base Europe connectée avec le préfixe DATABASE_EU (intégration Neon) : prioritaire.
-if (process.env.DATABASE_EU_URL) process.env.DATABASE_URL = process.env.DATABASE_EU_URL;
+const euUrl = process.env.DATABASE_EU_DATABASE_URL ?? process.env.DATABASE_EU_URL;
+if (euUrl) process.env.DATABASE_URL = euUrl;
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
