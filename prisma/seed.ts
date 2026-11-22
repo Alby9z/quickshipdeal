@@ -10,6 +10,7 @@ import { hashPassword } from "better-auth/crypto";
 import { PERMISSIONS, ROLES } from "../src/modules/auth/permissions";
 import { EMAIL_TYPE_LABELS } from "../src/modules/emails/templates";
 import { SEED_PAGES } from "./seed-data/pages";
+import { LEGACY_PAGES_V1 } from "./seed-data/pages-legacy";
 
 const db = new PrismaClient();
 
@@ -51,16 +52,30 @@ async function main() {
         phone: "06 46 28 35 81",
         vatNumber: "",
         publicationDirector: "Brian MARTIN",
-        hostName: "",
-        hostAddress: "",
+        hostName: "Vercel Inc.",
+        hostAddress: "440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com",
         mediatorName: "",
         mediatorUrl: "",
         createdOn: "19/10/2023",
       },
     },
   });
+  // Hébergeur (Vercel) : complété seulement si le champ est encore vide.
+  const biz = await db.appSetting.findUnique({ where: { key: "business" } });
+  const bizValue = (biz?.value ?? {}) as Record<string, unknown>;
+  if (biz && !bizValue.hostName) {
+    await db.appSetting.update({
+      where: { key: "business" },
+      data: { value: { ...bizValue, hostName: "Vercel Inc.", hostAddress: "440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com" } },
+    });
+  }
   await db.appSetting.upsert({ where: { key: "tax" }, update: {}, create: { key: "tax", value: { vatMode: "UNCONFIGURED", defaultVatRateBps: 2000 } } });
-  await db.appSetting.upsert({ where: { key: "store" }, update: {}, create: { key: "store", value: {} } });
+  await db.appSetting.upsert({ where: { key: "store" }, update: {}, create: { key: "store", value: { termsVersion: "2026-11-22" } } });
+  const store = await db.appSetting.findUnique({ where: { key: "store" } });
+  const storeValue = (store?.value ?? {}) as Record<string, unknown>;
+  if (store && (!storeValue.termsVersion || storeValue.termsVersion === "brouillon")) {
+    await db.appSetting.update({ where: { key: "store" }, data: { value: { ...storeValue, termsVersion: "2026-11-22" } } });
+  }
 
   const carriers = [
     { code: "colissimo", name: "Colissimo", trackingUrlTemplate: "https://www.laposte.fr/outils/suivre-vos-envois?code={tracking}" },
@@ -78,12 +93,20 @@ async function main() {
     void label;
   }
 
+  // Pages : création si absente ; mise à jour seulement si la page n'a jamais été modifiée dans l'admin
+  // (contenu identique à un ancien brouillon du seed). Les textes juridiques rédigés sont publiés.
   for (const page of SEED_PAGES) {
-    await db.page.upsert({
-      where: { key: page.key },
-      update: {},
-      create: { key: page.key, title: page.title, slug: page.slug, content: page.content, status: "DRAFT", needsLegalReview: page.legal },
-    });
+    const status = page.publish ? "PUBLISHED" : "DRAFT";
+    const existing = await db.page.findUnique({ where: { key: page.key } });
+    if (!existing) {
+      await db.page.create({ data: { key: page.key, title: page.title, slug: page.slug, content: page.content, status, needsLegalReview: page.legal } });
+      continue;
+    }
+    const legacy = LEGACY_PAGES_V1.find((p) => p.key === page.key);
+    if (legacy && existing.content.trim() === legacy.content.trim() && existing.content.trim() !== page.content.trim()) {
+      await db.page.update({ where: { id: existing.id }, data: { title: page.title, content: page.content, status } });
+      console.log(`Page « ${page.title} » mise à jour (${status}).`);
+    }
   }
 
   const email = process.env.SEED_ADMIN_EMAIL?.trim();

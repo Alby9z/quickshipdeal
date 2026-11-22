@@ -8,7 +8,7 @@ import { CookieSettingsLink } from "./cookie-consent";
 const COLS = [
   { title: "Boutique", links: [["/boutique", "Tous les produits"], ["/categories", "Catégories"], ["/nouveautes", "Nouveautés"], ["/meilleures-ventes", "Meilleures ventes"], ["/promotions", "Promotions"]] },
   { title: "Aide", links: [["/suivi-commande", "Suivi de commande"], ["/livraison", "Livraison"], ["/retours", "Retours et remboursements"], ["/faq", "FAQ"], ["/contact", "Contact"]] },
-  { title: "Informations", links: [["/a-propos", "À propos"], ["/blog", "Blog"], ["/mentions-legales", "Mentions légales"], ["/cgv", "CGV"], ["/confidentialite", "Confidentialité"], ["/cookies", "Cookies"]] },
+  { title: "Informations", links: [["/a-propos", "À propos"], ["/blog", "Blog"], ["/juridique", "Informations juridiques"], ["/mentions-legales", "Mentions légales"], ["/cgv", "CGV"], ["/confidentialite", "Confidentialité"], ["/cookies", "Cookies"]] },
 ] as const;
 
 export async function Footer() {

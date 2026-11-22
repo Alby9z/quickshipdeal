@@ -47,6 +47,7 @@
     "react-hook-form": "^7.92.0",
     "react-markdown": "^10.1.0",
     "recharts": "^3.11.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.39.0",
     "sanitize-html": "^2.18.2",
     "server-only": "^0.0.1",

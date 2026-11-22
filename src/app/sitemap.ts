@@ -18,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     db.blogPost.findMany({ where: publicPostWhere(), select: { slug: true, updatedAt: true } }),
     db.page.findMany({ where: { status: "PUBLISHED" }, select: { key: true, updatedAt: true } }),
   ]);
-  const statics = ["", "/boutique", "/categories", "/nouveautes", "/meilleures-ventes", "/promotions", "/livraison", "/retours", "/contact", "/blog", "/mentions-legales", "/suivi-commande"];
+  const statics = ["", "/boutique", "/categories", "/nouveautes", "/meilleures-ventes", "/promotions", "/livraison", "/retours", "/contact", "/blog", "/mentions-legales", "/juridique", "/suivi-commande"];
   return [
     ...statics.map((p) => ({ url: `${base}${p}`, changeFrequency: "daily" as const, priority: p === "" ? 1 : 0.6 })),
     ...categories.map((c) => ({ url: `${base}/categorie/${c.slug}`, lastModified: c.updatedAt, priority: 0.7 })),
